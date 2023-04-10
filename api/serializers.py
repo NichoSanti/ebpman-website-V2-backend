@@ -1,4 +1,8 @@
 from rest_framework import serializers
+from api.models import Contact
 
-class SnipperSerializer(serializers.Serializer):
-    first_name = serializers.CharField(max_length=50)
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = ['first_name', 'last_name', 'email_address', 'updated']
+
