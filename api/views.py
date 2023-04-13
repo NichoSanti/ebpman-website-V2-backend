@@ -9,8 +9,8 @@ from .serializers import ContactSerializer
 @api_view(['POST'])
 def sendContact(request):
     data = request.data
-    note = Note.objects.create(
+    contact = Contact.objects.create(
         body=data['body']
     )
-    serializer = NoteSerializer(note, many=False)
+    serializer = ContactSerializer(contact, many=False)
     return Response(serializer.data)
