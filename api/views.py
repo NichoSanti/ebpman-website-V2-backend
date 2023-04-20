@@ -32,13 +32,11 @@ def createContact(request):
 
 def send_email(first_name, last_name, email, message):
     subject = 'New contact form submission'
-    from_email = 'your_email@example.com' # Replace with your own email
-    to_email = settings.DEFAULT_FROM_EMAIL # Replace with the recipient's email
+    from_email = 'your_email@example.com'  # Replace with your own email
+    to_email = settings.DEFAULT_FROM_EMAIL  # Replace with the recipient's email
     body = f"Name: {first_name} {last_name}\nEmail: {email}\nMessage: {message}"
 
     send_mail(subject, body, from_email, [to_email], fail_silently=False)
-
-
 
 
 @api_view(['GET'])
