@@ -61,7 +61,7 @@ def getLatestVideo(request):
             'part': 'snippet',
             'order': 'date',
             'maxResults': 1,
-
+            'type': 'video',
         },
     )
     response.raise_for_status()
