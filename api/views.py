@@ -1,10 +1,15 @@
+import requests
+from django.conf import settings
+from decouple import config
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.core.mail import send_mail
 from .models import Contact
 from .serializers import ContactSerializer
-from django.conf import settings
+
+API_KEY = config("API_KEY")
+CHANNEL_ID = config("CHANNEL_ID")
 
 
 @api_view(['GET'])
@@ -44,3 +49,25 @@ def getContacts(request):
     contacts = Contact.objects.all().order_by('-created')
     serializer = ContactSerializer(contacts, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def getLatestVideo(request):
+    response = requests.get(
+        'https://www.googleapis.com/youtube/v3/search',
+        params={
+            'key': API_KEY,
+            'channelId': CHANNEL_ID,
+            'part': 'snippet',
+            'order': 'date',
+            'maxResults': 1,
+
+        },
+    )
+    response.raise_for_status()
+    data = response.json()
+    if data['items']:
+        video_id = data['items'][0]['id']['videoId']
+    else:
+        video_id = None
+    return Response({'videoId': video_id})
