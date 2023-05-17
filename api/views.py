@@ -60,14 +60,49 @@ def getLatestVideo(request):
             'channelId': CHANNEL_ID,
             'part': 'snippet',
             'order': 'date',
-            'maxResults': 1,
+            'maxResults': 5,
             'type': 'video',
         },
     )
     response.raise_for_status()
     data = response.json()
+
+    for item in data['items']:
+        video_id = item['id']['videoId']
+
+        video_response = requests.get(
+            'https://www.googleapis.com/youtube/v3/videos',
+            params={
+                'key': API_KEY,
+                'id': video_id,
+                'part': 'snippet',
+            },
+        )
+        video_response.raise_for_status()
+        video_data = video_response.json()
+
+        if video_data['items']:
+            live_broadcast_content = video_data['items'][0]['snippet']['liveBroadcastContent']
+            if live_broadcast_content != 'upcoming':
+                return Response({'videoId': video_id})
+
+    return Response({'videoId': None})
+
+
+@api_view(['GET'])
+def getChannelViews(request):
+    response = requests.get(
+        'https://www.googleapis.com/youtube/v3/channels',
+        params={
+            'key': API_KEY,
+            'id': CHANNEL_ID,
+            'part': 'statistics',
+        },
+    )
+    response.raise_for_status()
+    data = response.json()
     if data['items']:
-        video_id = data['items'][0]['id']['videoId']
+        view_count = data['items'][0]['statistics']['viewCount']
     else:
-        video_id = None
-    return Response({'videoId': video_id})
+        view_count = None
+    return Response({'viewCount': view_count})
