@@ -1,5 +1,7 @@
 import requests
 from django.conf import settings
+from django.core.cache import cache
+from django.utils.timezone import now, timedelta
 from decouple import config
 from rest_framework import status
 from rest_framework.response import Response
@@ -53,56 +55,93 @@ def getContacts(request):
 
 @api_view(['GET'])
 def getLatestVideo(request):
-    response = requests.get(
-        'https://www.googleapis.com/youtube/v3/search',
-        params={
-            'key': API_KEY,
-            'channelId': CHANNEL_ID,
-            'part': 'snippet',
-            'order': 'date',
-            'maxResults': 5,
-            'type': 'video',
-        },
-    )
-    response.raise_for_status()
-    data = response.json()
+    # Check if the value is in the cache
+    video_id = cache.get('latestVideo')
 
-    for item in data['items']:
-        video_id = item['id']['videoId']
-
-        video_response = requests.get(
-            'https://www.googleapis.com/youtube/v3/videos',
+    # If the value is not in the cache, fetch it from the API
+    if video_id is None:
+        response = requests.get(
+            'https://www.googleapis.com/youtube/v3/search',
             params={
                 'key': API_KEY,
-                'id': video_id,
+                'channelId': CHANNEL_ID,
                 'part': 'snippet',
+                'order': 'date',
+                'maxResults': 5,
+                'type': 'video',
             },
         )
-        video_response.raise_for_status()
-        video_data = video_response.json()
+        response.raise_for_status()
+        data = response.json()
 
-        if video_data['items']:
-            live_broadcast_content = video_data['items'][0]['snippet']['liveBroadcastContent']
-            if live_broadcast_content != 'upcoming':
-                return Response({'videoId': video_id})
+        for item in data['items']:
+            video_id = item['id']['videoId']
 
-    return Response({'videoId': None})
+            video_response = requests.get(
+                'https://www.googleapis.com/youtube/v3/videos',
+                params={
+                    'key': API_KEY,
+                    'id': video_id,
+                    'part': 'snippet',
+                },
+            )
+            video_response.raise_for_status()
+            video_data = video_response.json()
+
+            if video_data['items']:
+                live_broadcast_content = video_data['items'][0]['snippet']['liveBroadcastContent']
+                if live_broadcast_content != 'upcoming':
+                    break
+        else:
+            video_id = None
+
+        # Cache the value for an hour (or however long makes sense for your use case)
+        cache.set('latestVideo', video_id, 60 * 60)
+
+    return Response({'videoId': video_id})
 
 
 @api_view(['GET'])
 def getChannelViews(request):
-    response = requests.get(
-        'https://www.googleapis.com/youtube/v3/channels',
-        params={
-            'key': API_KEY,
-            'id': CHANNEL_ID,
-            'part': 'statistics',
-        },
-    )
-    response.raise_for_status()
-    data = response.json()
-    if data['items']:
-        view_count = data['items'][0]['statistics']['viewCount']
-    else:
-        view_count = None
-    return Response({'viewCount': view_count})
+
+    viewCount = cache.get('viewCount')
+
+    if viewCount is None:
+        response = requests.get(
+            'https://www.googleapis.com/youtube/v3/channels',
+            params={
+                'key': API_KEY,
+                'id': CHANNEL_ID,
+                'part': 'statistics',
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+        viewCount = data['items'][0]['statistics']['viewCount']
+
+        cache.set('viewCount', viewCount, 60 * 60 * 24)
+
+    return Response({'viewCount': viewCount})
+
+
+@api_view(['GET'])
+def getSubscriberCount(request):
+
+    subscriber_count = cache.get('subscriberCount')
+
+    if subscriber_count is None:
+        response = requests.get(
+            'https://www.googleapis.com/youtube/v3/channels',
+            params={
+                'key': API_KEY,
+                'id': CHANNEL_ID,
+                'part': 'statistics',
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+        subscriber_count = data['items'][0]['statistics']['subscriberCount']
+
+        cache.set('subscriberCount', subscriber_count, 60 * 60)
+
+    return Response({'subscriberCount': subscriber_count})
