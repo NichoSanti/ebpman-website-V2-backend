@@ -7,5 +7,6 @@ urlpatterns = [
     path('latest-video/', views.getLatestVideo, name='latest-video'),
     path('channel-views/', views.getChannelViews, name='channel-views'),
     path('channel-subscriber-count/', views.getSubscriberCount,
-         name='channel-subscriber-count')
+         name='channel-subscriber-count'),
+    path('channel-video-count/', views.getVideoCount, name='video-count'),
 ]

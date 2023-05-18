@@ -145,3 +145,26 @@ def getSubscriberCount(request):
         cache.set('subscriberCount', subscriber_count, 60 * 60)
 
     return Response({'subscriberCount': subscriber_count})
+
+
+@api_view(['GET'])
+def getVideoCount(request):
+
+    video_count = cache.get('videoCount')
+
+    if video_count is None:
+        response = requests.get(
+            'https://www.googleapis.com/youtube/v3/channels',
+            params={
+                'key': API_KEY,
+                'id': CHANNEL_ID,
+                'part': 'statistics',
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+        video_count = data['items'][0]['statistics']['videoCount']
+
+        cache.set('videoCount', video_count, 60 * 60)
+
+    return Response({'videoCount': video_count})
