@@ -95,7 +95,6 @@ def getLatestVideo(request):
         else:
             video_id = None
 
-        # Cache the value for an hour (or however long makes sense for your use case)
         cache.set('latestVideo', video_id, 60 * 60)
 
     return Response({'videoId': video_id})
@@ -119,7 +118,7 @@ def getChannelViews(request):
         data = response.json()
         viewCount = data['items'][0]['statistics']['viewCount']
 
-        cache.set('viewCount', viewCount, 60 * 60 * 24)
+        cache.set('viewCount', viewCount, 60 * 60)
 
     return Response({'viewCount': viewCount})
 
