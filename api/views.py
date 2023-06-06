@@ -1,3 +1,4 @@
+import traceback
 import requests
 from django.conf import settings
 from django.core.cache import cache
@@ -167,3 +168,45 @@ def getVideoCount(request):
         cache.set('videoCount', video_count, 60 * 60)
 
     return Response({'videoCount': video_count})
+
+
+@api_view(['GET'])
+def getPlaylistVideos(request, playlist_id, max_results=5):
+    playlist_videos = cache.get(f'playlistVideos-{playlist_id}')
+
+    if playlist_videos is None:
+        try:
+            response = requests.get(
+                'https://www.googleapis.com/youtube/v3/playlistItems',
+                params={
+                    'key': API_KEY,
+                    'playlistId': playlist_id,
+                    'part': 'snippet',
+                    'maxResults': max_results,
+                },
+            )
+
+            response.raise_for_status()
+            data = response.json()
+
+            # Print the entire response for debugging
+            print(data)
+
+            # Check if the 'items' list is empty and handle it
+            if not data.get('items'):
+                print("No items in response")
+                return Response({"message": "No items in response"}, status=status.HTTP_400_BAD_REQUEST)
+
+            playlist_videos = [item['snippet']['resourceId']
+                               ['videoId'] for item in data['items']]
+            cache.set(f'playlistVideos-{playlist_id}',
+                      playlist_videos, 60 * 60)
+
+        except Exception as e:
+            # Print the exception for debugging
+            print(str(e))
+            # If you want the full traceback, uncomment the line below
+            # print(traceback.format_exc())
+            return Response({"message": "An error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({'playlistVideos': playlist_videos})

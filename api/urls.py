@@ -9,4 +9,6 @@ urlpatterns = [
     path('channel-subscriber-count/', views.getSubscriberCount,
          name='channel-subscriber-count'),
     path('channel-video-count/', views.getVideoCount, name='video-count'),
+    path('playlist-videos/<str:playlist_id>/<int:max_results>/',
+         views.getPlaylistVideos, name='playlist-videos'),
 ]
