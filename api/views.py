@@ -15,12 +15,6 @@ API_KEY = config("API_KEY")
 CHANNEL_ID = config("CHANNEL_ID")
 
 
-@api_view(['GET'])
-def getRoutes(request):
-
-    return Response('Our API')
-
-
 @api_view(['POST'])
 def createContact(request):
     serializer = ContactSerializer(data=request.data)
