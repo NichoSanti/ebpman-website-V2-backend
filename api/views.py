@@ -34,8 +34,8 @@ def createContact(request):
 
 def send_email(first_name, last_name, email, message):
     subject = 'New contact form submission'
-    from_email = 'your_email@example.com'  # Replace with your own email
-    to_email = settings.DEFAULT_FROM_EMAIL  # Replace with the recipient's email
+    from_email = 'your_email@example.com'
+    to_email = settings.DEFAULT_FROM_EMAIL
     body = f"Name: {first_name} {last_name}\nEmail: {email}\nMessage: {message}"
 
     send_mail(subject, body, from_email, [to_email], fail_silently=False)
@@ -50,10 +50,9 @@ def getContacts(request):
 
 @api_view(['GET'])
 def getLatestVideo(request):
-    # Check if the value is in the cache
+
     video_id = cache.get('latestVideo')
 
-    # If the value is not in the cache, fetch it from the API
     if video_id is None:
         response = requests.get(
             'https://www.googleapis.com/youtube/v3/search',
@@ -183,7 +182,6 @@ def getPlaylistVideos(request, playlist_id, max_results=5):
             response.raise_for_status()
             data = response.json()
 
-            # Print the entire response for debugging
             print(data)
 
             # Check if the 'items' list is empty and handle it
@@ -197,10 +195,9 @@ def getPlaylistVideos(request, playlist_id, max_results=5):
                       playlist_videos, 60 * 60)
 
         except Exception as e:
-            # Print the exception for debugging
+
             print(str(e))
-            # If you want the full traceback, uncomment the line below
-            # print(traceback.format_exc())
+
             return Response({"message": "An error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response({'playlistVideos': playlist_videos})
